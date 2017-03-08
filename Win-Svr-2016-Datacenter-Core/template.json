@@ -55,7 +55,14 @@
                 "storageProfile": {
                     "imageReference": {
                         "id": "/subscriptions/c1d0a0ea-bf6e-4c1c-8b55-f1bdb0208df8/resourceGroups/awe-infra-storage-rg/providers/Microsoft.Compute/images/winsvr2016core32gbprem"
-                    }
+                    },
+					"osDisk": {
+						"name": "[parameters('virtualMachineName')]",
+						"createOption": "fromImage",
+						"managedDisk": {
+							"storageAccountType": "Premium_LRS"
+						}
+					}
                 },
                 "networkProfile": {
                     "networkInterfaces": [
