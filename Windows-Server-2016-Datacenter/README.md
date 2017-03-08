@@ -1,4 +1,3 @@
-# VM-Series Simple Template
 # Windows Server 2016 Datacenter
 
 This ARM template deploys a Windows Server 2016 Datacenter VM with SSD Managed Disk in an Azure resource group.
