@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope"
+        },
+        "virtualMachineName": {
+            "value": "deploy-test"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "adminUsername": {
+            "value": "plcs_admin"
+        },
+        "storageAccountName": {
+            "value": "awetestserversrgdisks622"
+        },
+        "virtualNetworkName": {
+            "value": "awe-core-vnet"
+        },
+        "networkInterfaceName": {
+            "value": "deploy-test962"
+        },
+        "adminPassword": {
+            "value": null
+        },
+        "subnetName": {
+            "value": "server"
+        }
+    }
+}
