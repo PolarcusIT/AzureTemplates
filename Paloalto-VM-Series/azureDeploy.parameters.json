@@ -1,109 +1,185 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "location": {
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "West Europe"
+            ],
+			"defaultValue": "West Europe",
+            "metadata": {
+                "description": "region of resources"
+            }
+        },
+        "dnsNameForPublicIP": {
+            "type": "string",
+            "metadata": {
+                "description": "Globally unique DNS name to access management interface of VM-Series firewall"
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of VM-Series VM in the Azure portal"
+            }
+        },
+        "adminUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for VM-Series administrator"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+	    "defaultValue": "<YOUR PASSWORD",
+            "metadata": {
+                "description": "Password for VM-Series administrator"
+            }
+        },
+        "authenticationType": {
+            "type": "string",
+            "metadata": {
+                "descritpion": "Type of authentication "
+            },
+            "allowedValues": [
+                "sshPublicKey",
+                "password"
+            ],
+            "defaultValue": "password"
+        },
+        "sshKey": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "SSH rsa public key file as a string."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "allowedValues": [
+                "Standard_DS3_v2",
+                "Standard_DS4_v2"
+            ],
+            "metadata": {
+                "description": "Azure VM size for VM-Series"
+            }
+        },
+        "srcIPInboundNSG": {
+            "type": "string",
+            "metadata": {
+                "description": "Your source public IP address. Added to the inbound DefaultNSG on eth0 (MGMT)"
+            }
+        },
+        "baseUrl" : {
+		"type" : "string",
+		"metadata": {
+			"artifactsBaseUrl": ""
+		},
+		"defaultValue": "https://raw.githubusercontent.com/PolarcusIT/AzureTemplates/master/Paloalto-VM-Series"
+	},
+    "virtualNetworkName": {
       "type": "string",
       "metadata": {
-        "description": "region of resources"
-      }
-    },
-    "newStorageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "Globally unique lowercase name of your storage account"
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "metadata": {
-        "description": "The type of the Storage Account created"
+        "description": "Name of the virtual network that the consumer wants to use"
       },
-      "defaultValue": "Premium_LRS"
+      "defaultValue": "panVnet"
     },
-    "storageAccountNewOrExisting": {
-      "type": "string",
-      "defaultValue": "new",
-      "allowedValues": [
-        "new",
-        "existing"
-      ],
-      "metadata": {
-        "Description": "Indicates whether the Storage Account is new or existing"
-      }
-    },
-    "existingStorageAccountRG": {
-      "type": "string",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Storage Resource Group of the Existing VM."
-      }
-    },
-    "dnsNameForPublicIP": {
+	"existingVirtualNetworkResourceGroup": {
       "type": "string",
       "metadata": {
-        "description": "Globally unique DNS name to access management interface of VM-Series firewall"
+        "description": "Name of the existing Resource group where the virtual network that the consumer wants to use is"
       }
     },
-    "vmName": {
+    "virtualNetworkAddressPrefix": {
       "type": "string",
+      "defaultValue": "192.168.0.0/16",
       "metadata": {
-        "description": "Name of VM-Series VM in the Azure portal"
+        "description": "Virtual network address CIDR"
       }
     },
-    "adminUserName": {
+    "subnet0Name": {
       "type": "string",
+      "defaultValue": "Mgmt",
       "metadata": {
-        "description": "Username for VM-Series administrator"
+        "description": "Subnet for the Mgmt"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "defaultValue": "<YOUR PASSWORD",
-      "metadata": {
-        "description": "Password for VM-Series administrator"
-      }
-    },
-    "authenticationType": {
+    "subnet1Name": {
       "type": "string",
+      "defaultValue": "Untrust",
       "metadata": {
-        "descritpion": "Type of authentication "
+        "description": "Subnet for the Untrust"
+      }
+    },
+    "subnet2Name": {
+      "type": "string",
+      "defaultValue": "Trust",
+      "metadata": {
+        "description": "Subnet for the Trust"
+      }
+    },
+    "subnet3Name": {
+      "type": "string",
+      "defaultValue": "NAT",
+      "metadata": {
+        "description": "Subnet for the NAT"
+      }
+    },
+    "subnet0Prefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/24",
+      "metadata": {
+        "description": "Mgmt subnet CIDR"
+      }
+    },
+    "subnet1Prefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "Untrust subnet CIDR"
+      }
+    },
+    "subnet2Prefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "Trust subnet CIDR"
+      }
+    },
+    "subnet3Prefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "NAT subnet CIDR"
+      }
+    },	
+    "subnet0StartAddress": {
+      "type": "string",
+      "defaultValue": "192.168.0.4",
+      "metadata": {
+        "description": "Mgmt subnet start address"
+      }
+    },
+    "subnet1StartAddress": {
+      "type": "string",
+      "defaultValue": "192.168.1.4",
+      "metadata": {
+        "description": "Untrust subnet start address"
+      }
+    },
+    "subnet2StartAddress": {
+      "type": "string",
+      "defaultValue": "192.168.2.4",
+      "metadata": {
+        "description": "Trust subnet start address"
       },
-      "allowedValues": [
-        "sshPublicKey",
-        "password"
-      ],
-      "defaultValue": "password"
-    },
-    "sshKey": {
+    "subnet3StartAddress": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "192.168.2.4",
       "metadata": {
-        "description": "SSH rsa public key file as a string."
+        "description": "NAT subnet start address"
       }
-    },
-    "vmSize": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_DS3_v2",
-        "Standard_DS4_v2"
-      ],
-      "metadata": {
-        "description": "Azure VM size for VM-Series"
-      }
-    },
-    "srcIPInboundNSG": {
-      "type": "string",
-      "metadata": {
-        "description": "Your source public IP address. Added to the inbound DefaultNSG on eth0 (MGMT)"
-      }
-    },
-    "baseUrl": {
-      "type": "string",
-      "metadata": {
-        "artifactsBaseUrl": ""
-      },
-      "defaultValue": "https://raw.githubusercontent.com/saurabhtrekker/UI1/master"
+    }
     }
   }
-}

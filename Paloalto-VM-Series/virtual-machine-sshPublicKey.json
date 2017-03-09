@@ -34,10 +34,13 @@
     },
     "sshKey": {
       "type": "string"
-    }
+    },
+	"availabilitySetName": {
+	  "type": "string"
+	}
   },
   "variables": {
-        "apiVersion": "2015-06-15",
+        "apiVersion": "2016-04-30-preview",
 	"sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
   },
   "resources": [
@@ -52,6 +55,9 @@
            "publisher": "[parameters('imagePublisher')]"
         },
         "properties": {
+			"availabilitySet": {
+				"id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('availabilitySetName'))]"
+			},
             "hardwareProfile": {
                 "vmSize": "[parameters('vmSize')]"
             },
@@ -78,27 +84,29 @@
                     "version": "latest"
                 },
                 "osDisk": {
-                    "name": "osdisk",
-                    "vhd": {
-                        "uri": "[concat('http://', parameters('newStorageAccount'), '.blob.core.windows.net/vhds/', parameters('vmName'), '-', parameters('imageOffer'), '-', parameters('imageSku'), '.vhd')]"
-                    },
+                    "name": "[parameters('vmName')]",
                     "caching": "ReadWrite",
                     "createOption": "FromImage"
                 }
             },
             "networkProfile": {
                 "networkInterfaces": [{
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'0'))]",
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'-mgmt'))]",
                     "properties": {
                         "primary": true
                     }
                 }, {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'1'))]",
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'-eth1-1'))]",
                     "properties": {
                         "primary": false
                     }
                 }, {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'2'))]",
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'-eth1-2'))]",
+                    "properties": {
+                        "primary": false
+                    }
+                }, {
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'),'-eth1-3'))]",
                     "properties": {
                         "primary": false
                     }

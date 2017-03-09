@@ -4,39 +4,12 @@
     "parameters": {
         "location": {
             "type": "string",
+            "allowedValues": [
+                "West Europe"
+            ],
+			"defaultValue": "West Europe",
             "metadata": {
                 "description": "region of resources"
-            }
-        },
-        "newStorageAccount": {
-            "type": "string",
-            "metadata": {
-                "description": "Globally unique lowercase name of your storage account"
-            }
-        },
-        "storageAccountType": {
-            "type": "string",
-	    "metadata": {
-		"description": "The type of the Storage Account created"
-	    },
-	    "defaultValue":"Standard_LRS"
-	},
-        "storageAccountNewOrExisting" : {
-            "type": "string",
-            "defaultValue" : "new",
-            "allowedValues" : [
-                "new",
-                "existing"
-            ],
-            "metadata": {
-                "Description": "Indicates whether the Storage Account is new or existing"
-            }
-        },
-        "existingStorageAccountRG": {
-            "type": "string",
-            "defaultValue" : "",
-            "metadata": {
-               "description": "Storage Resource Group of the Existing VM."
             }
         },
         "dnsNameForPublicIP": {
@@ -82,11 +55,18 @@
                 "description": "SSH rsa public key file as a string."
             }
         },
+        "availabilitySetName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Name of the exisitng Availability Set."
+            }
+        },
         "vmSize": {
             "type": "string",
             "allowedValues": [
-                "Standard_D3",
-                "Standard_D4"
+                "Standard_DS3_v2",
+                "Standard_DS4_v2"
             ],
             "metadata": {
                 "description": "Azure VM size for VM-Series"
@@ -103,7 +83,7 @@
 		"metadata": {
 			"artifactsBaseUrl": ""
 		},
-		"defaultValue": "https://raw.githubusercontent.com/saurabhtrekker/UI1/master"
+		"defaultValue": "https://raw.githubusercontent.com/PolarcusIT/AzureTemplates/master/Paloalto-VM-Series"
 	},
     "virtualNetworkName": {
       "type": "string",
@@ -111,6 +91,12 @@
         "description": "Name of the virtual network that the consumer wants to use"
       },
       "defaultValue": "panVnet"
+    },
+    "existingVirtualNetworkResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing Resource group where the virtual network that the consumer wants to use is"
+      }
     },
     "virtualNetworkAddressPrefix": {
       "type": "string",
@@ -140,6 +126,13 @@
         "description": "Subnet for the Trust"
       }
     },
+    "subnet3Name": {
+      "type": "string",
+      "defaultValue": "NAT",
+      "metadata": {
+        "description": "Subnet for the NAT"
+      }
+    },
     "subnet0Prefix": {
       "type": "string",
       "defaultValue": "192.168.0.0/24",
@@ -161,6 +154,13 @@
         "description": "Trust subnet CIDR"
       }
     },
+    "subnet3Prefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "NAT subnet CIDR"
+      }
+    },	
     "subnet0StartAddress": {
       "type": "string",
       "defaultValue": "192.168.0.4",
@@ -181,6 +181,13 @@
       "metadata": {
         "description": "Trust subnet start address"
       }
+    },
+    "subnet3StartAddress": {
+      "type": "string",
+      "defaultValue": "192.168.2.4",
+      "metadata": {
+        "description": "NAT subnet start address"
+      }
     }
     },
     "variables": {
@@ -188,46 +195,22 @@
         "imagePublisher": "paloaltonetworks",
     	"imageSku" : "byol",
 	    "imageOffer" : "vmseries1",
-        "fwpublicIPName": "[concat(parameters('vmName'), '-fwMgmtPublicIP')]",
-        "nicName": "[concat(parameters('vmName'), '-eth')]",
+        "fwpublicIPName": "[concat(parameters('vmName'), '-mgmt-pip')]",
+        "nicName": "[parameters('vmName')]",
         "FWPrivateIPAddressUntrust": "[parameters('subnet1StartAddress')]",
         "FWPrivateIPAddressTrust": "[parameters('subnet2StartAddress')]",
+		"FWPrivateIPAddressNAT": "[parameters('subnet3StartAddress')]",
         "publicIPAddressType": "Dynamic",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-        "nsgname-mgmt": "[concat(parameters('vmName'), '-DefaultNSG')]",
+        "vnetID": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+        "nsgname-mgmt": "[concat(parameters('vmName'), '-nsg')]",
         "subnet0Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet0Name'))]",
         "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet1Name'))]",
         "subnet2Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet2Name'))]",
-	"storageAccountSetupURL" : "[concat(parameters('baseUrl'),'/storageAccount-',parameters('storageAccountNewOrExisting'),'.json')]",
-	"vmTemplateUrl": "[concat(parameters('baseUrl'), '/virtual-machine-', parameters('authenticationType'),'.json')]"
+		"subnet3Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet3Name'))]",
+		"vmTemplateUrl": "[concat(parameters('baseUrl'), '/virtual-machine-', parameters('authenticationType'),'.json')]"
     },
     "resources": [
-    {
-	"name": "storageAcountSetup1",
-	"type": "Microsoft.Resources/deployments",
-        "apiVersion": "2015-01-01",
-	"properties" : {
-		"mode": "Incremental",
-		"templateLink" : {
-		"uri" : "[variables('storageAccountSetupURL')]",
-		"contentVersion": "1.0.0.0"
-	},
-	"parameters" : {
-		"location": {
-			"value": "[parameters('location')]"
-		},
-		"storageAccountType": {
-			"value": "[parameters('storageAccountType')]"
-		},
-		"newStorageAccount" : {
-			"value": "[parameters('newStorageAccount')]"
-		},
-		"storageAccountExistingRG": {
-			"value": "[parameters('existingStorageAccountRG')]"
-		}
-	  }
-        }
-    }, {
+	{
         "apiVersion": "[variables('apiVersion')]",
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[variables('fwpublicIPName')]",
@@ -241,7 +224,7 @@
     }, {
         "apiVersion": "[variables('apiVersion')]",
         "type": "Microsoft.Network/networkSecurityGroups",
-        "name": "[concat(parameters('vmName'), '-DefaultNSG')]",
+        "name": "[concat(parameters('vmName'), '-nsg')]",
         "location": "[parameters('location')]",
         "properties": {
             "securityRules": [{
@@ -286,47 +269,12 @@
             }]
         }
     }, {
-        "apiVersion": "[variables('apiVersion')]",
-        "type": "Microsoft.Network/virtualNetworks",
-        "name": "[parameters('virtualNetworkName')]",
-        "location": "[parameters('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgname-mgmt'))]"
-        ],
-        "properties": {
-            "addressSpace": {
-                "addressPrefixes": [
-                    "[parameters('virtualNetworkAddressPrefix')]"
-                ]
-            },
-            "subnets": [{
-                "name": "[parameters('subnet0Name')]",
-                "properties": {
-                    "addressPrefix": "[parameters('subnet0Prefix')]",
-                    "networkSecurityGroup": {
-                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgname-mgmt'))]"
-                    }
-                }
-            }, {
-                "name": "[parameters('subnet1Name')]",
-                "properties": {
-                    "addressPrefix": "[parameters('subnet1Prefix')]"
-                }
-            }, {
-                "name": "[parameters('subnet2Name')]",
-                "properties": {
-                    "addressPrefix": "[parameters('subnet2Prefix')]"
-                }
-            }]
-        }
-    }, {
-        "apiVersion": "[variables('apiVersion')]",
+		"apiVersion": "[variables('apiVersion')]",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicName'), '0')]",
+        "name": "[concat(variables('nicName'), '-mgmt')]",
         "location": "[parameters('location')]",
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('fwpublicIPName'))]",
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('fwpublicIPName'))]"
         ],
         "tags": {
             "displayName": "[concat('NetworkInterfaces', '0')]"
@@ -348,11 +296,8 @@
     }, {
         "apiVersion": "[variables('apiVersion')]",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicName'), '1')]",
+        "name": "[concat(variables('nicName'), '-eth1-1')]",
         "location": "[parameters('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-        ],
         "tags": {
             "displayName": "[concat('NetworkInterfaces', '1')]"
         },
@@ -372,11 +317,8 @@
     }, {
         "apiVersion": "[variables('apiVersion')]",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicName'), '2')]",
+        "name": "[concat(variables('nicName'), '-eth1-2')]",
         "location": "[parameters('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-        ],
         "tags": {
             "displayName": "[concat('NetworkInterfaces', '2')]"
         },
@@ -393,16 +335,37 @@
                 }
             }]
         }
+    },  {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(variables('nicName'), '-eth1-3')]",
+        "location": "[parameters('location')]",
+        "tags": {
+            "displayName": "[concat('NetworkInterfaces', '3')]"
+        },
+        "properties": {
+            "enableIPForwarding": true,
+            "ipConfigurations": [{
+                "name": "[concat('ipconfig', '3')]",
+                "properties": {
+                    "privateIPAllocationMethod": "Static",
+                    "privateIPAddress": "[variables('FWPrivateIPAddressNAT')]",
+                    "subnet": {
+                        "id": "[variables(concat('subnet','3','Ref'))]"
+                    }
+                }
+            }]
+        }
     },
     {
       "name": "PAN-VM",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-         "storageAcountSetup1",
-         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '0')]",
-         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '1')]",
-         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '2')]"
+         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-mgmt')]",
+         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-eth1-1')]",
+		 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-eth1-2')]",
+         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-eth1-3')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -438,11 +401,11 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "newStorageAccount": {
-            "value": "[parameters('newStorageAccount')]"
-          },
           "sshKey": {
             "value": "[parameters('sshKey')]"
+          },
+          "availabilitySetName": {
+			"value": "[parameters('availabilitySetName')]"
           }
         }
       }
