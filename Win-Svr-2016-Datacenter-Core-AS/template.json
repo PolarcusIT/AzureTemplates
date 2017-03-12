@@ -3,34 +3,34 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
-            "type": "String"
+            "type": "string"
         },
         "virtualMachineName": {
-            "type": "String"
+            "type": "string"
         },
         "virtualMachineSize": {
-            "type": "String"
+            "type": "string"
         },
         "adminUsername": {
-            "type": "String"
+            "type": "string"
         },
         "storageAccountName": {
-            "type": "String"
+            "type": "string"
         },
         "virtualNetworkName": {
-            "type": "String"
+            "type": "string"
         },
         "networkInterfaceName": {
-            "type": "String"
+            "type": "string"
         },
         "adminPassword": {
-            "type": "SecureString"
+            "type": "securestring"
         },
         "availabilitySetName": {
             "type": "string"
         },
-		"subnetName": {
-            "type": "String"
+        "subnetName": {
+            "type": "string"
         }
     },
     "variables": {
@@ -39,10 +39,13 @@
     },
     "resources": [
         {
-            "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('virtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2016-04-30-preview",
             "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+            ],
             "properties": {
                 "osProfile": {
                     "computerName": "[parameters('virtualMachineName')]",
@@ -59,13 +62,14 @@
                     "imageReference": {
                         "id": "/subscriptions/c1d0a0ea-bf6e-4c1c-8b55-f1bdb0208df8/resourceGroups/awe-infra-storage-rg/providers/Microsoft.Compute/images/winsvr2016core32gbprem"
                     },
-					"osDisk": {
-						"name": "[parameters('virtualMachineName')]",
-						"createOption": "fromImage",
-						"managedDisk": {
-							"storageAccountType": "Premium_LRS"
-						}
-					}
+                    "osDisk": {
+                        "name": "[parameters('virtualMachineName')]",
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -73,20 +77,18 @@
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
                         }
                     ]
-                }
-				"availabilitySetName": {
+                },
+                "availabilitySet": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
                 }
-            },
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
-            ]
+            }
         },
         {
-            "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2016-09-01",
             "location": "[parameters('location')]",
+            "dependsOn": [],
             "properties": {
                 "ipConfigurations": [
                     {
@@ -99,13 +101,12 @@
                         }
                     }
                 ]
-            },
-            "dependsOn": []
+            }
         }
     ],
     "outputs": {
         "adminUsername": {
-            "type": "String",
+            "type": "string",
             "value": "[parameters('adminUsername')]"
         }
     }
