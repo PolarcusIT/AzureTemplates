@@ -74,7 +74,7 @@
                         }
                     ]
                 }
-				"availabilitySet": {
+				"availabilitySetName": {
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
                 }
             },
