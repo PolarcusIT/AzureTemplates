@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "westeurope"
+        },
+        "virtualMachineName": {
+            "value": "thevmname"
+        },
+        "virtualMachineSize": {
+            "value": "Standard_DS1_v2"
+        },
+        "adminUsername": {
+            "value": "theusername"
+        },
+        "storageAccountName": {
+            "value": "aweinfraserversrg359"
+        },
+        "virtualNetworkName": {
+            "value": "awe-core-vnet"
+        },
+        "networkInterfaceName": {
+            "value": "thevmname363"
+        },
+        "adminPassword": {
+            "value": null
+        },
+        "availabilitySetName": {
+            "value": "awe-dc-as"
+        },
+        "subnetName": {
+            "value": "server"
+        }
+    }
+}
